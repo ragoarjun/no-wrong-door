@@ -1,0 +1,23 @@
+{
+  "name": "no-wrong-door",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ragoarjun/no-wrong-door.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ragoarjun/no-wrong-door/issues"
+  },
+  "homepage": "https://github.com/ragoarjun/no-wrong-door#readme",
+  "description": "",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
