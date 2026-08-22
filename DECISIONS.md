@@ -160,3 +160,27 @@ REST:
 - Reliability and latency problem.
 - It is slow and can fail.
   Our API has to hide these problems from the employee as much as possible while still being honest about missing information.
+
+System Design:
+
+1. Adapter-based design:
+
+- Each source system will have it's own adapter
+- REST adapter handles REST pagination and duplicates records
+- XML adapter handles XML parsing, slow responses and failures
+
+2. Orchestration Layer:
+
+- A service layer will call both adapters independently.
+- Collect whatever information is available.
+- It will assemble the final response
+- It will handle graceful degradation when one source fails.
+
+3. Single API:
+
+- Node.js + Express will expose the API
+- Employees communicates only with our API
+
+4. Source independence:
+
+- REST and XML adapters should not depend on each other.
