@@ -17,7 +17,11 @@ async function getAllResidents() {
     while (true) {
         const data = await getResidentsPage(page);
 
-        allResidents = allResidents.concat(data.results);
+        for (const resident of data.results) {
+            if (!allResidents.some(item => item.id === resident.id)) {
+                allResidents.push(resident);
+            }
+        }
 
         if (!data.has_more) {
             break;
