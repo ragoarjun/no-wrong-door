@@ -1,5 +1,4 @@
 Understanding Problem Statement:
-
 PROBLEM:
 If I'm working in a Government benefit office. A person named "Maria" walks in. As a staff member I want to know everything about her.
 Currently: (Two completely different system)
@@ -70,3 +69,50 @@ If I have time:
 
 TASK for me:
 Build a Node.js API that talks to two unreliable systems, removes REST pagination duplicates, survives XML failures by returning partial data with honest status information, and is structured so each source is independent and easy to modify when the day-two requirement arrives.
+
+Understanding the folder and file structure:
+
+1. \_rest_data.json :
+
+- This is raw database-like data behind Source 1.
+- It contains the Resident Index serves
+- There are 620 resident records
+- I shouldn't read this file from our API. From \_rest_service.py
+
+2. \_xml_data.json :
+
+- Same idea but for source 2
+- The structure is completely different. And the service turns the data into XML
+- Again our application shouldn't directly touch this JSON
+
+3. \_rest_service.py
+
+- This is the actual mock Resident Information System
+- This is the thing that our API will call
+- It exposes: - GET /residents?page=1 - GET residents/<id> - GET /health
+- Main problem is pagination can overlap
+- If we just do (all_records += page_records) It is wrong so our future REST adapter needs to understand this behaviour.
+
+4. xml_service.py
+
+- This is the mock Benefits Information System
+- It exposes: - GET /records - GET /records/<ref> - GET /health
+- It's slow, normal requests can take roughly 0.7 to 2.4 seconds
+- It can fail. Default failure rate: 15%
+- A failed request can still take time before returning 500
+- /health endpoint is deliberately reliable
+
+5. run_both.sh
+
+- This is simply the launcher
+- When you run: ./services/run_both.sh:
+  - rest_service.py -> localhost:8081
+  - xml_service.py -> localhost:8082
+- Our future application will essentially have:
+  Our API: 3000
+- REST : 8081
+- XML : 8082
+
+6. DATA-PACK.md
+
+- This is Brite's documentation, not our application
