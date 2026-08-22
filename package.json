@@ -18,6 +18,7 @@
   "homepage": "https://github.com/ragoarjun/no-wrong-door#readme",
   "description": "",
   "dependencies": {
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "fast-xml-parser": "^5.11.0"
   }
 }
