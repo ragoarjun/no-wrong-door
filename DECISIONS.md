@@ -1,4 +1,5 @@
 Understanding Problem Statement:
+
 PROBLEM:
 If I'm working in a Government benefit office. A person named "Maria" walks in. As a staff member I want to know everything about her.
 Currently: (Two completely different system)
@@ -27,9 +28,7 @@ Challenges:
 - Instead of JSON, it returns XML.
 - Different Format, different IDs, different naming style
 - It's slow and sometimes it returns 500
-
-Does Brite expect Identity Matching?
-
+  Does Brite expect Identity Matching?
 - They have said "it's a stretch goal"
 - No need to merge Maria from REST and Maria from XML
 - They are unrealted and no common key
@@ -116,3 +115,48 @@ Understanding the folder and file structure:
 6. DATA-PACK.md
 
 - This is Brite's documentation, not our application
+
+What I observed by running the services:
+
+1. REST Service:
+
+- /health works and returns a successful response.
+- /residents?page=1 returned:
+  - page: 1
+  - page_size: 25
+  - total: 620
+  - has_more: true
+  - 25 residents in results
+- I tested page 1 and page 2.
+- Page 1 ended with:
+  - R-10594
+  - R-10057
+- Page 2 started with:
+  - R-10594
+  - R-10057
+- So the duplicate pagination problem is actually happening in the provided service.
+- We cannot simply combine all pages.
+- We need to keep track of the unique REST id and remove duplicates.
+
+2. XML Service:
+
+- /health works and returns a successful response.
+- /records returns XML instead of JSON.
+- I tested /records manually.
+- One request took approximately 2.04 seconds.
+- Another request took approximately 1.23 seconds.
+- So the delay is not fixed and the XML service can take noticeable time even when it succeeds.
+- The service can also return 500 errors.
+- Default failure rate is 15%.
+- The failure can happen after the request has already spent time waiting.
+- This means our API cannot depend on the XML service always responding successfully.
+
+The two sources have different problems.
+REST:
+
+- Data consistency problem.
+- Pagination can give us the same record more than once.
+  XML:
+- Reliability and latency problem.
+- It is slow and can fail.
+  Our API has to hide these problems from the employee as much as possible while still being honest about missing information.
