@@ -13,12 +13,14 @@ async function getResidentsPage(page) {
 async function getAllResidents() {
     let page = 1;
     let allResidents = [];
+    const seenIds = new Set();
 
     while (true) {
         const data = await getResidentsPage(page);
 
         for (const resident of data.results) {
-            if (!allResidents.some(item => item.id === resident.id)) {
+            if (!seenIds.has(resident.id)) {
+                seenIds.add(resident.id);
                 allResidents.push(resident);
             }
         }
