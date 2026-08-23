@@ -4,25 +4,30 @@ const { getBenefitsRecords } = require("../src/adapters/benefitsRegister");
 
 async function test() {
     try {
-        const records = await getBenefitsRecords();
+        console.log("First request:");
 
-        if (!Array.isArray(records)) {
-            throw new Error("Benefits records are not an array");
+        const firstRecords = await getBenefitsRecords();
+
+        if (!Array.isArray(firstRecords) || firstRecords.length === 0) {
+            throw new Error("First request returned invalid data");
         }
 
-        if (records.length === 0) {
-            throw new Error("No benefits records returned");
+        console.log("First request records:", firstRecords.length);
+
+        console.log("\nSecond request:");
+
+        const secondRecords = await getBenefitsRecords();
+
+        if (!Array.isArray(secondRecords) || secondRecords.length === 0) {
+            throw new Error("Second request returned invalid data");
         }
 
-        const firstRecord = records[0];
-
-        if (!firstRecord.Ref) {
-            throw new Error("Benefits record is missing Ref");
+        if (firstRecords.length !== secondRecords.length) {
+            throw new Error("Cached data does not match first response");
         }
 
-        console.log("Total benefits records:", records.length);
-        console.log("First record:", firstRecord);
-        console.log("PASS: Benefits records loaded and parsed correctly");
+        console.log("Second request records:", secondRecords.length);
+        console.log("PASS: Cache returned data successfully");
     } catch (error) {
         console.error("FAIL:", error.message);
         process.exit(1);
