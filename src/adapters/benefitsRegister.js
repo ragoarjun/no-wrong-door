@@ -4,26 +4,37 @@ const XML_BASE_URL = "http://localhost:8082";
 
 
 async function getBenefitsRecords() {
-    console.log("Calling XML service...");
 
-    const response = await fetch(`${XML_BASE_URL}/records`);
+    const controller = new AbortController();
 
-    console.log("XML service responded:", response.status);
+    const timeout = setTimeout(() => {
+        controller.abort();
+    }, 3000);
 
-    if (!response.ok) {
-        throw new Error(`Benefits service returned ${response.status}`);
+    try {
+        const response = await fetch(`${XML_BASE_URL}/records`, {
+            signal: controller.signal
+        });
+
+        if (!response.ok) {
+            throw new Error(`Benefits service returned ${response.status}`);
+        }
+
+        const xml = await response.text();
+
+        const parser = new XMLParser();
+        const data = parser.parse(xml);
+
+        return data.BenefitsRegister.Record;
+    } catch (error) {
+        if (error.name === "AbortError") {
+            throw new Error("Benefits service timed out");
+        }
+
+        throw error;
+    } finally {
+        clearTimeout(timeout);
     }
-
-    const xml = await response.text();
-
-    console.log("Received XML");
-
-    const parser = new XMLParser();
-    const data = parser.parse(xml);
-
-    console.log("XML parsed");
-
-    return data.BenefitsRegister.Record;
 }
 
 module.exports = {
