@@ -30,7 +30,7 @@ Clone the repository and install the Node.js dependencies from the project root:
 
 This will create a new no-wrong-door folder on your computer.
 
-Important: Git will not automatically open the newly created folder in VS Code or File Explorer. After cloning, manually open the no-wrong-door folder in your preferred editor.
+**Important: Git will not automatically open the newly created folder in VS Code or File Explorer. After cloning, manually open the no-wrong-door folder in your preferred editor.**
 
 ```bash
 git clone https://github.com/ragoarjun/no-wrong-door.git
@@ -38,7 +38,7 @@ cd no-wrong-door
 npm install
 ```
 
-Windows / PowerShell: If npm install shows an error saying that npm.ps1 cannot be loaded because running scripts is disabled on the system, run:
+**Windows / PowerShell: If npm install shows an error saying that npm.ps1 cannot be loaded because running scripts is disabled on the system, run:**
 
 ```bash
 Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
