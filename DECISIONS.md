@@ -184,3 +184,57 @@ System Design:
 4. Source independence:
 
 - REST and XML adapters should not depend on each other.
+
+######### Implementation Descision #########
+
+1. REST Adapter:
+
+- The REST adapter is responsible for communicating with the Resident Information System.
+  - getResidentsPage(page)
+    - Calls the Resident Information System for a specific page
+    - Sends requests to the `/residents?page=<page>` endpoint
+    - Returns the residents and pagination information from that page
+  - getAllResidents()
+    - Retrieves all resident pages
+    - Continues while the source reports more pages
+    - Uses the resident's unique REST `id` to detect duplicates
+    - Returns one clean array of unique residents
+
+2. Benefits Adapter:
+
+- The Benefits adapter is responsible for communicating with the Benefits Register
+- It hides the XML format, upstream failures, and timeout behaviour from the rest of the application
+  - getBenefitsRecords()
+    - Calls the Benefits Register `/records` endpoint
+    - Uses `fast-xml-parser` to convert the XML response into a JavaScript object
+    - Extracts `BenefitsRegister.Record` and returns it as a simple array
+    - Detects HTTP failures such as `500`
+    - Uses `AbortController` with a 3-second timeout so a slow upstream service cannot wait indefinitely
+    - Converts a timeout into a clear application error
+    - Always clears the timeout using `finally`
+
+3. Orchestration service (src/services/residentService.js)
+
+- The orchestration service coordinates the two independent adapters - getUnifiedData() - Calls the Resident and Benefits adapters independently - Uses `Promise.allSettled()` rather than `Promise.all()` - Allows one source to fail without discarding successful data from the other source - Converts technical `fulfilled` / `rejected` results into application-level statuses - Produces `complete`, `partial`, or `failed` overall status - Preserves the error message when a source fails - Uses `null` for unavailable source data rather than treating a failed request as an empty result
+
+How did we handle graceful degradation?
+
+- `Promise.all()` would reject the entire operation when one source fails.
+- `Promise.allSettled()` allows both operations to finish independently, so the API can return useful Resident data even when the Benefits Register is unavailable.
+
+########### DAY 2 : Surprise Challenge
+
+- On Day 2, Brite changed the Benefits Register configuration so that it now fails on approximately 40% of requests
+- There was no new data or new system. The existing Benefits Register simply became significantly less reliable
+
+We did not redesign the application.
+Instead, the existing architecture was tested against the new failure behaviour:
+
+- The Benefits Register remained isolated behind `src/adapters/benefitsRegister.js`.
+- `getBenefitsRecords()` continues to detect HTTP failures and timeouts.
+- `src/services/residentService.js` continues to call both adapters independently.
+- `getUnifiedData()` uses `Promise.allSettled()` so one failed source does not reject the entire operation.
+- The service returns `complete` when both sources succeed.
+- The service returns `partial` when one source fails.
+- The successful source's data is still returned.
+- The failed source is reported with its failure reason.
