@@ -238,3 +238,78 @@ Instead, the existing architecture was tested against the new failure behaviour:
 - The service returns `partial` when one source fails.
 - The successful source's data is still returned.
 - The failed source is reported with its failure reason.
+
+########### API LAYER
+
+- After the adapters and orchestration service were working, an Express API layer was added.
+- The API runs on port 3000.
+- The API acts as the single doorway between the employee and the two source systems.
+
+1. `src/app.js`
+
+- Creates the Express application.
+- Configures JSON handling.
+- Keeps the root endpoint `/` to confirm that the API is running.
+- Mounts the resident routes under `/api`.
+- Starts the application on port 3000.
+
+2. `src/routes/residentRoutes.js`
+
+- Defines the public API route.
+- `GET /api/residents` calls `getUnifiedData()`.
+- Returns the unified result as JSON.
+- The route itself does not contain source-specific logic.
+- Pagination, duplicate handling, XML parsing, timeout handling, and graceful degradation remain inside their respective layers.
+
+The request flow is:
+
+Client
+→ `GET /api/residents`
+→ `residentRoutes.js`
+→ `getUnifiedData()`
+→ Resident Adapter + Benefits Adapter
+→ Unified Response
+
+########### INTEGRATION TESTING
+
+The complete application was tested through the public API after connecting the adapters, orchestration layer, and Express route.
+
+The following scenarios were verified:
+
+1. Both services working:
+
+- Residents → success
+- Benefits → success
+- Overall → `complete`
+
+2. Benefits service failing:
+
+- Residents → success
+- Benefits → failed
+- Overall → `partial`
+- Resident data is still returned.
+- The Benefits failure and its reason are reported.
+
+3. Resident service failing:
+
+- Residents → failed
+- Benefits → success
+- Overall → `partial`
+- Benefits data is still returned.
+- The Resident failure is reported.
+
+4. Both services failing:
+
+- Residents → failed
+- Benefits → failed
+- Overall → `failed`
+
+This confirmed that the API does not depend on both upstream systems being available at the same time.
+
+########### IDEMPOTENCY TESTING
+
+- The API currently performs read-only GET operations.
+- No request creates or modifies persistent data.
+- The same API request was repeated several times through the browser.
+- The response continued to behave consistently and no records were created or accumulated.
+- This confirms that repeated reads are safe and do not introduce duplicate data.
