@@ -313,3 +313,33 @@ This confirmed that the API does not depend on both upstream systems being avail
 - The same API request was repeated several times through the browser.
 - The response continued to behave consistently and no records were created or accumulated.
 - This confirms that repeated reads are safe and do not introduce duplicate data.
+
+########### OPTIONAL RESILIENCE IMPROVEMENTS
+
+1. Caching:
+
+- Added an in-memory cache for Benefits Register records.
+- Cache TTL is 60 seconds.
+- A 60-second TTL was chosen because the Benefits Register is slow, while allowing a small amount of acceptable data staleness.
+- Successful Benefits responses are cached.
+- HTTP failures, timeouts, and parsing failures are never cached.
+- The cache is intentionally in-memory because the cached data is temporary and does not need to survive an application restart.
+
+2. Circuit Breaker:
+
+- Added a circuit breaker around the Benefits Register.
+- After 3 consecutive failures, the circuit changes from `CLOSED` to `OPEN`.
+- While `OPEN`, requests do not call the Benefits Register for 30 seconds.
+- After 30 seconds, the circuit enters `HALF-OPEN` and allows one recovery request.
+- A successful recovery closes the circuit.
+- A failed recovery opens the circuit again.
+- When the circuit is open, the API still returns a `partial` response when Resident data is available.
+- This preserves the existing graceful degradation behaviour while preventing repeated calls to an unhealthy upstream service.
+
+########### IDENTITY MATCHING DECISION
+
+- Identity matching was intentionally not implemented.
+- The Resident Index and Benefits Register use unrelated identifiers and do not provide a shared key.
+- The problem statement explicitly identifies cross-source identity matching as a stretch goal rather than part of the mandatory floor.
+- Attempting to match records using names, dates of birth, or addresses could create incorrect matches and introduce false information into the unified response.
+- With the remaining development time, reliability, graceful degradation, caching, circuit breaking, testing, and clean-clone readiness provide more defensible value than speculative identity matching.
